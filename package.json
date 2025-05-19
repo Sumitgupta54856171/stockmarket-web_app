@@ -12,12 +12,19 @@
     "axios": "^1.9.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
+    "chart": "^0.1.2",
+    "chart.js": "^4.4.9",
+    "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.509.0",
     "mongodb": "^6.16.0",
     "mongoose": "^8.14.1",
     "next": "15.3.1",
+    "next-auth": "^4.24.11",
+    "pg": "^8.15.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-hook-form": "^7.56.1"
+    "react-hook-form": "^7.56.1",
+    "recharts": "^2.15.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
