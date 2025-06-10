@@ -1,7 +1,7 @@
 import Link from 'next/link';
 export default function Loginnav(){
     return <>
-{/* Login and Signup Buttons */}
+
 <div className="flex items-center space-x-2 mr-4">
           <Link 
             href="/login"

@@ -8,7 +8,7 @@
    try{
 const db =await mongoose.connect(process.env.url as string || "mongodb://localhost:27017/studentdb")
 .then((db) => {
-  console.log(db)
+
      console.log("Connected to database");
 
    if(connection.isConnected) {

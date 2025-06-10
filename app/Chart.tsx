@@ -1,62 +1,159 @@
 'use client'
 import React from 'react';
-import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { candlestickData } from './lib/canddlestickData';
 
-const stockData = [
-  { name: 'Jan', price: 150 },
-  { name: 'Feb', price: 165 },
-  { name: 'Mar', price: 160 },
-  { name: 'Apr', price: 175 },
-  { name: 'May', price: 180 },
-  { name: 'Jun', price: 195 },
-  { name: 'Jul', price: 200 },
-  { name: 'Aug', price: 190 },
-  { name: 'Sep', price: 210 },
-  { name: 'Oct', price: 225 },
-  { name: 'Nov', price: 220 },
-  { name: 'Dec', price: 235 },
-];
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend
+);
 
-const StockChart = () => {
-  return (
-   
-    <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-xl">
-      
-      <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Stock Price Over Time</h2>
+// Custom plugin to draw wicks and hollow bodies
+const hollowCandlestickPlugin = {
+  id: 'hollowCandlestickPlugin',
+  beforeDatasetsDraw(chart: any, args: any, pluginOptions: any) {
+    const { ctx, chartArea: { top, bottom, left, right, width, height }, scales: { x, y } } = chart;
 
-  
-      <ResponsiveContainer width="100%" height={300}>
-       
-        <LineChart
-          data={stockData}
-          margin={{
-            top: 5, right: 30, left: 20, bottom: 5,
-          }}
-        >
-          <XAxis dataKey="name" stroke="#888888" />
+    chart.data.datasets.forEach((dataset: any, datasetIndex: number) => {
+      if (dataset.type === 'candlestick') {
+        const meta = chart.getDatasetMeta(datasetIndex);
+        meta.data.forEach((element: any, index: number) => {
+          const { open, high, low, close } = dataset.data[index];
 
-          <YAxis stroke="#888888" />
+          // Determine candle color based on open vs close
+          const isRising = close >= open;
+          const candleColor = isRising ? pluginOptions.risingColor : pluginOptions.fallingColor;
 
+          ctx.save();
+          ctx.beginPath();
 
-          <Tooltip cursor={{ stroke: 'red', strokeDasharray: '3 3' }} />
+          // Get pixel coordinates for open, high, low, close
+          const xPos = x.getPixelForValue(index);
+          const yOpen = y.getPixelForValue(open);
+          const yClose = y.getPixelForValue(close);
+          const yHigh = y.getPixelForValue(high);
+          const yLow = y.getPixelForValue(low);
 
-          <Legend />
+          // Calculate bar width (you can adjust this)
+          const barWidth = 10; // Adjust as needed
+          const halfBarWidth = barWidth / 2;
 
-          <Line type="monotone" dataKey="price" stroke="#82ca9d" activeDot={{ r: 8 }} />
-        </LineChart>
-      </ResponsiveContainer>
-    </div> 
-  );
-}
+          // Draw Wick (High-Low)
+          ctx.strokeStyle = candleColor;
+          ctx.lineWidth = 1; // Wick thickness
+          ctx.moveTo(xPos, yHigh);
+          ctx.lineTo(xPos, yLow);
+          ctx.stroke();
 
+          // Draw Body (Open-Close)
+          // For hollow, we only draw the border
+          const bodyTop = Math.min(yOpen, yClose);
+          const bodyBottom = Math.max(yOpen, yClose);
+          const bodyHeight = bodyBottom - bodyTop;
+
+          ctx.strokeStyle = candleColor;
+          ctx.lineWidth = 1; // Body border thickness
+          ctx.strokeRect(xPos - halfBarWidth, bodyTop, barWidth, bodyHeight);
+
+          // If it's a rising candle, fill the body
+          if (isRising) {
+            ctx.fillStyle = pluginOptions.risingFillColor || 'transparent'; // Use a transparent fill by default for hollow
+            ctx.fillRect(xPos - halfBarWidth, bodyTop, barWidth, bodyHeight);
+          } else {
+            ctx.fillStyle = pluginOptions.fallingFillColor || 'transparent';
+            ctx.fillRect(xPos - halfBarWidth, bodyTop, barWidth, bodyHeight);
+          }
+
+          ctx.restore();
+        });
+      }
+    });
+  }
+};
+
+// Register the custom plugin
+ChartJS.register(hollowCandlestickPlugin);
 
 const Chart = () => {
+  const chartData = {
+    labels: candlestickData.map(d => d.time),
+    datasets: [
+      {
+        type: 'candlestick', // Custom type to be used by our plugin
+        label: 'Price',
+        data: candlestickData,
+        // These colors will be used by our custom plugin
+        risingColor: 'rgb(34, 197, 94)',   // Tailwind's green-500
+        fallingColor: 'rgb(239, 68, 68)',  // Tailwind's red-500
+        // Set fill colors for hollow effect (transparent for body)
+        risingFillColor: 'transparent',
+        fallingFillColor: 'transparent',
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false, // Allows you to control height with Tailwind
+    plugins: {
+      legend: {
+        display: true,
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context: { raw: { open: number; high: number; low: number; close: number; }; }) {
+            const dataPoint = context.raw;
+            return [
+              `Open: ${dataPoint.open}`,
+              `High: ${dataPoint.high}`,
+              `Low: ${dataPoint.low}`,
+              `Close: ${dataPoint.close}`
+            ];
+          }
+        }
+      },
+      hollowCandlestickPlugin: { // Pass options to your plugin
+        risingColor: 'rgb(34, 197, 94)', // Tailwind's green-500
+        fallingColor: 'rgb(239, 68, 68)', // Tailwind's red-500
+        risingFillColor: 'transparent',
+        fallingFillColor: 'transparent',
+      }
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false,
+        },
+      },
+      y: {
+        beginAtZero: false,
+        grid: {
+          color: 'rgba(200, 200, 200, 0.2)', // Light grid lines
+        },
+      },
+    },
+  };
+
   return (
-    
-    <div className="min-h-screen bg-gray-100 py-10">
-      <StockChart />
+    <div className="p-4 bg-gray-800 rounded-lg shadow-xl max-w-4xl mx-auto my-8">
+      <h2 className="text-xl font-semibold text-white mb-4 text-center">Hollow Candlestick Chart</h2>
+      <div className="relative h-96"> {/* Set a height for the chart */}
+        <Bar type="candlestick" data={chartData} options={chartOptions} />
+      </div>
     </div>
   );
-}
+};
 
 export default Chart;

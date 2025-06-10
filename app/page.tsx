@@ -1,15 +1,31 @@
+'use server'
 import Loginnav from "./Loginnav"
 import Navbar from "./Navbar"
-import Chart from "./Chart"
-import logout from "./logout"
 
-export default function Home(){
+import axios from "axios"
+import logout from "./logout"
+import Profile from "./Profile"
+import { getSession} from "./lib/session"
+import LiveCandlestickChart from "./LiveCandlestickChart"
+
+
+
+export default async function Home(){
+
+const session = await getSession();
+console.log(session)
+const userId = session.userId;
+
+
+
+   
 
 
     return <>
-    
-  <Loginnav></Loginnav>
-  <Chart></Chart>
+    <div className="overflow-auto">
+ {userId?<Profile/>:<Loginnav/>}
+ <LiveCandlestickChart/>
    <Navbar></Navbar>
+   </div>
     </>
 }
