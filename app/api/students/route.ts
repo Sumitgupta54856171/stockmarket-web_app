@@ -8,7 +8,10 @@ export async function POST(request: Request) {
     
     await dbconnect();
     const data = await request.json();
-
+   const existemail = User.find({email:data.email})
+   if(!existemail){
+     return NextResponse.json({message:"email is register please login"})
+   }
    const student = new User(data);
     await student.save();
     

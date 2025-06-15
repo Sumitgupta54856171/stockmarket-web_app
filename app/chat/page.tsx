@@ -49,7 +49,7 @@ export default function StockMarketChat() {
     setMessages([...messages, userMessage]);
     setNewMessage("");
     
-    // Simulate bot response (in a real app, this would come from your API)
+    
     setTimeout(() => {
       const botResponse = {
         id: messages.length + 2,

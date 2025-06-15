@@ -1,14 +1,14 @@
 import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from "next/headers";
 import { Session } from './models/sessiondb';
-import axios from 'axios';
+
 import dbconnect from './db';
 interface Sessionpayload {
   userId: String,
   expiresAt: Date,
 }
 
-const secret_key = new TextEncoder().encode(process.env.sessionSecret as string)
+const secret_key = new TextEncoder().encode("hello")
 export async function encrypt(payload: Sessionpayload): Promise<string> {
   return new SignJWT({data: payload})
     .setProtectedHeader({ alg: 'HS256' })

@@ -1,13 +1,16 @@
 'use client'
 import { useState } from 'react';
 import Link from 'next/link';
-
-export default async  function Navbar() {
+import ChatBot from './Chat';
+export default function Navbar() {
   const [activeItem, setActiveItem] = useState('home');
 
-  
+
+
   return (
-    <nav className="fixed inset-x-0 bottom-0 bg-white shadow-lg">
+    <>
+     
+      <nav className="fixed inset-x-0 bottom-0 bg-white shadow-lg">
       <ul className="flex justify-around items-center h-16">
         <li 
           className={`flex flex-col items-center justify-center p-2 ${
@@ -47,33 +50,19 @@ export default async  function Navbar() {
           </Link>
         </li>
 
-        <li className="flex flex-col items-center justify-center -mt-6">
-          <button className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-600 text-white shadow-xl hover:bg-blue-700 transition-colors duration-300">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-          </button>
-          <span className="text-xs text-gray-500 mt-1">News</span>
-        </li>
-
         <li 
           className={`flex flex-col items-center justify-center p-2 ${
-            activeItem === 'messages' 
+            activeItem === 'settings' 
               ? 'text-blue-600 bg-blue-100 rounded-lg shadow-md' 
               : 'text-gray-500'
           } transition-all duration-300`}
         >
-          <Link 
-            href="/messages" 
-            className="flex flex-col items-center"
-            onClick={() => setActiveItem('messages')}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-            </svg>
-            <span className="text-xs ">Stock.Ai</span>
+          <Link className="flex flex-col items-center" href="/news">
+          <img src="   https://cdn-icons-png.flaticon.com/512/81/81460.png" className="h-6 w-6"></img>
+          <span className="text-xs text-gray-500 mt-1">News</span>
           </Link>
         </li>
+        
 
         <li 
           className={`flex flex-col items-center justify-center p-2 ${
@@ -94,5 +83,6 @@ export default async  function Navbar() {
 
       </ul>
     </nav>
+    </>
   );
 }

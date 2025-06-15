@@ -9,7 +9,7 @@ const HistoricalCandlestickChart = () => {
   const [lastFetchTime, setLastFetchTime] = useState(null)
   const [fetchStatus, setFetchStatus] = useState('idle') // 'idle', 'fetching', 'success', 'error'
   // IMPORTANT: For security, use environment variables in production (e.g., process.env.NEXT_PUBLIC_POLYGON_API_KEY)
-  const [apiKey, setApiKey] = useState('') // Initialize as empty for user input
+  const [apiKey, setApiKey] = useState('TLDjpXVvaZ8LV1ofO76xJVkvj2PKuj73') // Initialize as empty for user input
 
   // Default dates: last 30 days
   const today = new Date()
@@ -169,26 +169,7 @@ const HistoricalCandlestickChart = () => {
         </h2>
         <p className="text-lg text-gray-700">Daily market data via Polygon.io REST API</p>
       </div>
-
-      {/* API Key Input */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-5 rounded-xl shadow-md mb-6 border border-blue-200">
-        <div className="flex flex-col md:flex-row items-center gap-4 mb-3">
-          <label htmlFor="apiKey" className="text-base font-semibold text-blue-800 shrink-0">Polygon.io API Key:</label>
-          <input 
-            id="apiKey"
-            type="password" // Use type="password" for sensitive input
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder="Enter your Polygon.io API key (e.g., pk_YOURKEYHERE)"
-            className="px-4 py-2 border border-blue-300 rounded-lg text-base w-full md:flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-            disabled={loading} // Disable during loading
-          />
-        </div>
-        <p className="text-sm text-blue-700 text-center md:text-left">
-          Get your free API key from <a href="https://polygon.io/dashboard" target="_blank" rel="noopener noreferrer" className="underline font-medium hover:text-blue-900 transition-colors">polygon.io/dashboard</a>.
-        </p>
-      </div>
-
+       
       {/* Data Load Status & Fetch Control */}
       <div className={`p-5 rounded-xl shadow-md mb-6 border ${
         fetchStatus === 'success' ? 'bg-green-100 border-green-300' :
@@ -215,15 +196,7 @@ const HistoricalCandlestickChart = () => {
               </span>
             </span>
           </div>
-          <button 
-            onClick={fetchHistoricalData}
-            disabled={loading || apiKey.length === 0}
-            className={`px-6 py-2 rounded-lg text-white text-lg font-bold shadow-lg transform transition-all duration-300
-              ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 active:scale-95'}
-              disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-none`}
-          >
-            {loading ? 'Fetching Data...' : 'Fetch Historical Data'}
-          </button>
+          
         </div>
       </div>
 

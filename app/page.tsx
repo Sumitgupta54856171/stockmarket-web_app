@@ -1,13 +1,11 @@
 'use server'
 import Loginnav from "./Loginnav"
 import Navbar from "./Navbar"
-
-import axios from "axios"
+import ChatBot from "./Chat"
 import logout from "./logout"
 import Profile from "./Profile"
 import { getSession} from "./lib/session"
 import LiveCandlestickChart from "./LiveCandlestickChart"
-
 
 
 export default async function Home(){
@@ -25,7 +23,9 @@ const userId = session.userId;
     <div className="overflow-auto">
  {userId?<Profile/>:<Loginnav/>}
  <LiveCandlestickChart/>
+
    <Navbar></Navbar>
+   <ChatBot />
    </div>
     </>
 }

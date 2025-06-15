@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     await dbconnect();
     const data = await request.json();
     console.log(data)
-   const user = await User.find({email:data.email,password:data.password})
+   const user = await User.find({email:data.email})
    console.log(user)
   if(user){
   console.log("user")
