@@ -7,16 +7,12 @@ const HistoricalCandlestickChart = () => {
   const [error, setError] = useState(null)
   const [symbol, setSymbol] = useState('AAPL')
   const [lastFetchTime, setLastFetchTime] = useState(null)
-  const [fetchStatus, setFetchStatus] = useState('idle') // 'idle', 'fetching', 'success', 'error'
-  // IMPORTANT: For security, use environment variables in production (e.g., process.env.NEXT_PUBLIC_POLYGON_API_KEY)
-  const [apiKey, setApiKey] = useState('TLDjpXVvaZ8LV1ofO76xJVkvj2PKuj73') // Initialize as empty for user input
+  const [fetchStatus, setFetchStatus] = useState('idle') 
+  const [apiKey, setApiKey] = useState() 
 
-  // Default dates: last 30 days
   const today = new Date()
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(today.getDate() - 30)
-
-  // Format date to YYYY-MM-DD for input fields
   const formatDate = (date) => date.toISOString().split('T')[0]
 
   const [startDate, setStartDate] = useState(formatDate(thirtyDaysAgo))
@@ -27,30 +23,29 @@ const HistoricalCandlestickChart = () => {
     'AAPL', 'GOOGL', 'MSFT', 'AMZN', 'TSLA', 
     'META', 'NVDA', 'NFLX', 'SPY', 'QQQ'
   ]
-
-  /**
+    /**
    * Transforms raw Polygon.io aggregate data (from REST API) into a consistent format
    * suitable for charting.
    * @param {object} polygonResult - A single aggregate result object (e.g., {c, h, l, o, t, v}).
    * @param {string} currentSymbol - The stock symbol for this aggregate.
    * @returns {object} Transformed data with timestamp, open, high, low, close, volume, and symbol.
    */
-  const transformPolygonData = (polygonResult, currentSymbol) => {
+
+
+
+  const transformPolygonData = (polygonResult:any, currentSymbol:any) => {
     return {
-      timestamp: new Date(polygonResult.t).toISOString(), // Unix millisecond timestamp (t) to ISO string
-      open: polygonResult.o,    // open price
-      high: polygonResult.h,    // high price
-      low: polygonResult.l,     // low price
-      close: polygonResult.c,   // close price
-      volume: polygonResult.v, // volume
-      symbol: currentSymbol    // symbol
+      timestamp: new Date(polygonResult.t).toISOString(), 
+      open: polygonResult.o,    
+      high: polygonResult.h,    
+      low: polygonResult.l,     
+      close: polygonResult.c,   
+      volume: polygonResult.v, 
+      symbol: currentSymbol    
     }
   }
 
-  /**
-   * Fetches historical aggregate data from Polygon.io REST API.
-   * Uses useCallback to memoize the function, preventing unnecessary re-creations.
-   */
+
   const fetchHistoricalData = useCallback(async () => {
     if (!apiKey) {
       setError('Please enter your Polygon.io API key to fetch data.')
@@ -68,16 +63,13 @@ const HistoricalCandlestickChart = () => {
     setLoading(true)
     setError(null)
     setFetchStatus('fetching')
-    setData([]) // Clear previous data
+    setData([]) 
 
     try {
-      // Construct the API URL for daily aggregates
-      // Multiplier: 1, Timespan: day, Adjusted: true, Sort: asc, Limit: 50000 (Polygon default is 120, max is 50000)
       const apiUrl = `https://api.polygon.io/v2/aggs/ticker/${symbol}/range/1/day/${startDate}/${endDate}?adjusted=true&sort=asc&limit=50000&apiKey=${apiKey}`
 
       const response = await fetch(apiUrl)
       if (!response.ok) {
-        // Attempt to parse error message from response body
         const errorData = await response.json().catch(() => ({}));
         const errorMessage = errorData.error || errorData.message || `HTTP error! Status: ${response.status}`;
         throw new Error(errorMessage);
@@ -86,7 +78,6 @@ const HistoricalCandlestickChart = () => {
       const rawData = await response.json()
 
       if (rawData.results && rawData.results.length > 0) {
-        // Transform and sort the fetched data
         const transformed = rawData.results
           .map(result => transformPolygonData(result, rawData.ticker))
           .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
@@ -97,7 +88,7 @@ const HistoricalCandlestickChart = () => {
         console.log('Fetched historical data:', transformed)
       } else {
         setData([])
-        setFetchStatus('idle') // No data found, revert to idle or a specific 'no-data' status
+        setFetchStatus('idle') 
         setError('No historical data found for the selected symbol and date range.')
         console.warn('No historical data found.')
       }
@@ -109,49 +100,40 @@ const HistoricalCandlestickChart = () => {
     } finally {
       setLoading(false)
     }
-  }, [apiKey, symbol, startDate, endDate]) // Dependencies for useCallback
+  }, [apiKey, symbol, startDate, endDate]) 
 
-  // Effect to fetch data when symbol, dates, or API key changes
   useEffect(() => {
     fetchHistoricalData()
-  }, [fetchHistoricalData]) // Depend on memoized fetchHistoricalData
-
-  // Chart dimensions and calculations
+  }, [fetchHistoricalData]) 
   const chartWidth = 900
   const chartHeight = 400
   const padding = 50
-  // Dynamically calculate candle width and spacing based on number of data points
-  // Ensure a minimum width for visibility, but don't let them overlap too much
   const candleWidth = Math.max(4, Math.min(20, (chartWidth - 2 * padding) / (data.length || 1) - 2))
   const candleSpacing = data.length > 1 ? (chartWidth - 2 * padding - candleWidth) / (data.length - 1) : 0;
 
 
   // Calculate min/max price for Y-axis scaling to fit data within chart
   const allValues = data.flatMap(d => [d.high, d.low])
-  const minPrice = allValues.length > 0 ? Math.min(...allValues) * 0.99 : 0 // 1% buffer below min
-  const maxPrice = allValues.length > 0 ? Math.max(...allValues) * 1.01 : 100 // 1% buffer above max
+  const minPrice = allValues.length > 0 ? Math.min(...allValues) * 0.99 : 0 
+  const maxPrice = allValues.length > 0 ? Math.max(...allValues) * 1.01 : 100 
   const priceRange = maxPrice - minPrice
 
-  // Scale function to map price values to Y-axis coordinates
   const scaleY = (price:number) => {
-    if (priceRange === 0) return chartHeight / 2 // Prevent division by zero, center price
+    if (priceRange === 0) return chartHeight / 2 
     return chartHeight - padding - ((price - minPrice) / priceRange) * (chartHeight - 2 * padding)
   }
 
-  // Scale function to map data index to X-axis coordinates
   const scaleX = (index:number) => {
     return padding + index * (candleWidth + candleSpacing) + candleWidth / 2;
   };
 
-  // Generate Y-axis labels for readability
   const yAxisLabels = []
-  const labelCount = 8 // Number of labels to display
+  const labelCount = 8 
   for (let i = 0; i <= labelCount; i++) {
     const price = minPrice + (priceRange * i) / labelCount
     yAxisLabels.push(price)
   }
 
-  // Helper function to format timestamp for X-axis labels (shows Month/Day)
   const formatTime = (timestamp) => {
     const date = new Date(timestamp)
     return date.toLocaleDateString('en-US', { 
@@ -162,7 +144,6 @@ const HistoricalCandlestickChart = () => {
 
   return (
     <div className="w-full max-w-6xl mx-auto p-6 bg-gray-100 font-sans antialiased">
-      {/* Header Section */}
       <div className="mb-6 text-center">
         <h2 className="text-4xl font-extrabold text-gray-900 mb-3">
           Historical Stock Candlestick Chart
@@ -170,7 +151,6 @@ const HistoricalCandlestickChart = () => {
         <p className="text-lg text-gray-700">Daily market data via Polygon.io REST API</p>
       </div>
        
-      {/* Data Load Status & Fetch Control */}
       <div className={`p-5 rounded-xl shadow-md mb-6 border ${
         fetchStatus === 'success' ? 'bg-green-100 border-green-300' :
         fetchStatus === 'fetching' ? 'bg-yellow-100 border-yellow-300' :
@@ -200,7 +180,6 @@ const HistoricalCandlestickChart = () => {
         </div>
       </div>
 
-      {/* Controls: Symbol, Start Date, End Date */}
       <div className="bg-gray-100 p-5 rounded-xl shadow-md mb-6 border border-gray-300">
         <div className="flex flex-col md:flex-row flex-wrap gap-4 items-center justify-between">
           <div className="flex items-center gap-3">
@@ -255,7 +234,6 @@ const HistoricalCandlestickChart = () => {
         </div>
       </div>
 
-      {/* Error Message Display */}
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-5 py-3 rounded-xl mb-6 shadow-md" role="alert">
           <p className="font-bold text-lg mb-1">Error:</p>
@@ -263,7 +241,6 @@ const HistoricalCandlestickChart = () => {
         </div>
       )}
 
-      {/* Chart Container */}
       <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 overflow-x-auto min-h-[450px] flex items-center justify-center">
         {loading && (
           <div className="flex items-center justify-center w-full h-full">
@@ -290,7 +267,6 @@ const HistoricalCandlestickChart = () => {
         
         {!loading && data.length > 0 && (
           <svg width={chartWidth} height={chartHeight} className="bg-white rounded-lg border border-gray-300 shadow-inner">
-            {/* Horizontal Grid lines and Y-axis labels */}
             {yAxisLabels.map((price, index) => (
               <g key={`y-label-${index}`}>
                 <line
@@ -298,7 +274,7 @@ const HistoricalCandlestickChart = () => {
                   y1={scaleY(price)}
                   x2={chartWidth - padding}
                   y2={scaleY(price)}
-                  stroke="#e5e7eb" // Light gray for grid lines
+                  stroke="#e5e7eb" 
                   strokeWidth="1"
                 />
                 <text
@@ -312,9 +288,7 @@ const HistoricalCandlestickChart = () => {
               </g>
             ))}
 
-            {/* Vertical grid lines (less frequent for readability) */}
             {data.map((_, index) => (
-              // Show a vertical grid line every N candles, or adjust based on data density
               index % Math.max(1, Math.floor(data.length / 10)) === 0 && (
                 <line
                   key={`x-grid-${index}`}
@@ -322,13 +296,12 @@ const HistoricalCandlestickChart = () => {
                   y1={padding}
                   x2={scaleX(index)}
                   y2={chartHeight - padding}
-                  stroke="#f3f4f6" // Even lighter gray for vertical lines
+                  stroke="#f3f4f6" 
                   strokeWidth="1"
                 />
               )
             ))}
 
-            {/* Candlesticks */}
             {data.map((candle, index) => {
               const x = scaleX(index)
               const openY = scaleY(candle.open)
@@ -336,13 +309,12 @@ const HistoricalCandlestickChart = () => {
               const highY = scaleY(candle.high)
               const lowY = scaleY(candle.low)
               
-              const isBullish = candle.close > candle.open // Green candle if close > open
-              const bodyHeight = Math.abs(closeY - openY) // Height of the candle body
-              const bodyTop = Math.min(openY, closeY) // Top-most point of the candle body
+              const isBullish = candle.close > candle.open 
+              const bodyHeight = Math.abs(closeY - openY) 
+              const bodyTop = Math.min(openY, closeY) 
 
               return (
                 <g key={`candle-${index}`}>
-                  {/* High-Low line (wick) */}
                   <line
                     x1={x}
                     y1={highY}
@@ -352,25 +324,23 @@ const HistoricalCandlestickChart = () => {
                     strokeWidth="1.5"
                   />
                   
-                  {/* Candlestick body */}
                   <rect
                     x={x - candleWidth / 2}
                     y={bodyTop}
                     width={candleWidth}
-                    height={Math.max(bodyHeight, 1)} // Ensure minimum height for flat candles
-                    fill={isBullish ? "#10b981" : "#ef4444"} // Solid fill for bullish, solid for bearish
+                    height={Math.max(bodyHeight, 1)} 
+                    fill={isBullish ? "#10b981" : "#ef4444"} 
                     stroke={isBullish ? "#10b981" : "#ef4444"}
                     strokeWidth="1"
                   />
                   
-                  {/* Date labels (show every few candles, rotated for space) */}
                   {index % Math.max(1, Math.floor(data.length / 8)) === 0 && (
                     <text
                       x={x}
-                      y={chartHeight - padding + 20} // Position below chart area
+                      y={chartHeight - padding + 20} 
                       textAnchor="middle"
                       className="text-xs fill-gray-600"
-                      transform={`rotate(45 ${x} ${chartHeight - padding + 20})`} // Rotate for better fit
+                      transform={`rotate(45 ${x} ${chartHeight - padding + 20})`} 
                     >
                       {formatTime(candle.timestamp)}
                     </text>
@@ -379,7 +349,6 @@ const HistoricalCandlestickChart = () => {
               )
             })}
 
-            {/* Chart inner border to define drawing area */}
             <rect
               x={padding}
               y={padding}
@@ -393,15 +362,14 @@ const HistoricalCandlestickChart = () => {
         )}
       </div>
 
-      {/* Current Price Info Cards (now showing latest fetched data) */}
       {data.length > 0 && (
         <div className="mt-6 grid grid-cols-2 md:grid-cols-5 gap- h-60">
           {(() => {
             const latest = data[data.length - 1]
-            const previous = data[data.length - 2] || latest // Fallback to latest if only one data point
+            const previous = data[data.length - 2] || latest 
             const change = latest.close - previous.close
             const changePercent = previous.close !== 0 ? ((change / previous.close) * 100) : 0
-            const isBullish = change > 0 // Determines color for change values
+            const isBullish = change > 0 
             
             return (
               <>
